@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>🦛 Hippo Routes – Think Like a Mathematician</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════ */
+:root{
+  --bg:      #1A0E07;
+  --surf:    #231208;
+  --surf2:   #2E1810;
+  --border:  rgba(205,133,63,.28);
+  --sand:    #F5DEB3;
+  --tan:     #CD853F;
+  --cream:   #FFF8EF;
+  --purpleg: linear-gradient(135deg,#4A148C,#7B1FA2);
+  --redg:    linear-gradient(135deg,#B71C1C,#E53935);
+  --greeng:  linear-gradient(135deg,#1B5E20,#388E3C);
+  --orangeg: linear-gradient(135deg,#E65100,#FF9800);
+}
+
+/* ══════════════════════════════════════
+   RESET
+══════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+/* ── smartboard-safe full-screen foundation ── */
+html{height:100%;}
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+  touch-action:manipulation;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ══════════════════════════════════════
+   HEADER
+══════════════════════════════════════ */
+header{
+  background:var(--purpleg);
+  color:#fff;
+  padding:9px 18px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,.55);
+  flex-shrink:0;
+  z-index:10;
+}
+.hdr-icon{
+  font-size:clamp(28px,4vw,42px);
+  line-height:1;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));
+  flex-shrink:0;
+}
+.hdr-text h1{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(16px,2.8vw,28px);
+  letter-spacing:.4px;line-height:1.1;
+}
+.hdr-text p{font-size:clamp(10px,1.3vw,13px);opacity:.8;margin-top:1px;}
+.hdr-badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.13);
+  border:2px solid rgba(255,255,255,.28);
+  border-radius:13px;
+  padding:6px 14px;
+  text-align:center;
+  font-family:'Fredoka One',cursive;
+  flex-shrink:0;
+}
+.hdr-badge .num{
+  font-size:clamp(20px,3.2vw,32px);
+  display:block;line-height:1.05;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.hdr-badge .num.pop{transform:scale(1.4);}
+.hdr-badge .lbl{font-size:clamp(9px,1.1vw,11px);opacity:.78;}
+
+/* ══════════════════════════════════════
+   WORKSPACE  (fills remaining height)
+══════════════════════════════════════ */
+.workspace{
+  display:flex;
+  flex:1;
+  min-height:0;          /* ← critical for flex children to scroll */
+  overflow:hidden;
+}
+
+/* ══════════════════════════════════════
+   LEFT SIDEBAR — Questions & Answers
+══════════════════════════════════════ */
+.sidebar{
+  width:212px;
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  background:var(--surf);
+  border-right:2px solid var(--border);
+  overflow-y:scroll;     /* sidebar has its own independent scroll */
+  overscroll-behavior-y:contain;
+  padding:10px 9px 100px; /* large bottom pad so nothing hides behind nav bar */
+  gap:7px;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-track{background:rgba(255,255,255,.04);}
+.sidebar::-webkit-scrollbar-thumb{background:var(--tan);border-radius:4px;}
+
+.sidebar-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:2px 3px 9px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sidebar-hdr h2{
+  font-family:'Fredoka One',cursive;
+  font-size:13px;
+  color:var(--sand);
+  opacity:.9;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-reveal-all{
+  background:rgba(255,213,64,.1);
+  border:1px solid rgba(255,213,64,.3);
+  color:#FFD740;
+  border-radius:7px;
+  padding:4px 9px;
+  font-family:'Fredoka One',cursive;
+  font-size:11px;
+  cursor:pointer;
+  transition:background .2s;
+  white-space:nowrap;
+}
+.btn-reveal-all:active{background:rgba(255,213,64,.22);}
+
+/* ── question cards (vertical in sidebar) ── */
+.qcard{
+  background:var(--surf2);
+  border-radius:9px;
+  padding:9px 10px;
+  border-left:3px solid;
+  flex-shrink:0;
+  cursor:pointer;
+  user-select:none;
+  transition:transform .14s,box-shadow .2s;
+  position:relative;
+}
+.qcard:active{transform:scale(.95);}
+.qcard.done{box-shadow:0 0 0 1.5px var(--qc);}
+
+.q-letter{
+  font-family:'Fredoka One',cursive;
+  font-size:13px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.q-check{font-size:.88em;opacity:0;transition:opacity .25s;}
+.qcard.done .q-check{opacity:1;}
+
+.q-text{
+  font-size:11px;
+  color:#888;margin-top:4px;line-height:1.4;
+}
+.q-ans{
+  margin-top:6px;
+  font-family:'Fredoka One',cursive;
+  font-size:13px;
+  padding:5px 7px;border-radius:7px;
+  text-align:center;
+  transition:filter .32s ease,opacity .32s ease;
+}
+.q-ans.blur {filter:blur(5px);opacity:.35;}
+.q-ans.clear{filter:none;opacity:1;}
+
+.q-hint{
+  font-size:10px;
+  color:#555;text-align:center;margin-top:3px;
+  transition:opacity .25s;
+  font-style:italic;
+}
+.qcard.done .q-hint{opacity:0;}
+
+/* ══════════════════════════════════════
+   CENTER COLUMN — Canvas + Sequence
+══════════════════════════════════════ */
+.center-col{
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+  padding:11px 8px;
+  /* center col does NOT scroll — canvas is fixed size */
+}
+.canvas-wrap{
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.7),
+             0 0 0 2px rgba(205,133,63,.3);
+  flex-shrink:0;
+}
+#gc{display:block;touch-action:none;}
+
+/* sequence strip */
+.seq-strip{
+  width:100%;
+  background:var(--surf);
+  border:2px solid var(--border);
+  border-radius:11px;
+  padding:7px 12px;
+  min-height:44px;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  font-size:clamp(11px,1.5vw,14px);
+  color:#888;
+}
+.seq-lbl{
+  font-weight:900;color:var(--tan);
+  white-space:nowrap;font-size:.9em;
+  letter-spacing:.3px;
+}
+.pill{
+  display:inline-flex;align-items:center;
+  padding:3px 9px;border-radius:20px;
+  font-weight:900;font-size:.85em;
+  font-family:'Fredoka One',cursive;
+  letter-spacing:.4px;
+  transition:opacity .2s,transform .2s;
+}
+.pill-E{background:#0D1B5E;color:#82B1FF;border:1px solid rgba(61,90,254,.25);}
+.pill-S{background:#0D3518;color:#69F0AE;border:1px solid rgba(0,230,118,.2);}
+.pill.dim{opacity:.22;transform:scale(.88);}
+
+/* ══════════════════════════════════════
+   RIGHT PANEL — Controls  (main scrollable area)
+══════════════════════════════════════ */
+.right-panel{
+  flex:1;
+  min-height:0;                    /* ← required for scroll to work */
+  overflow-y:scroll;               /* scroll, not auto */
+  overscroll-behavior-y:contain;
+  scroll-behavior:smooth;
+  padding:11px 12px 140px 8px;     /* large bottom padding — content never hidden */
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+.right-panel::-webkit-scrollbar{width:4px;}
+.right-panel::-webkit-scrollbar-track{background:rgba(255,255,255,.04);}
+.right-panel::-webkit-scrollbar-thumb{background:var(--tan);border-radius:4px;}
+
+/* ── shared card ── */
+.card{
+  background:var(--surf);
+  border:2px solid var(--border);
+  border-radius:13px;
+  padding:11px 13px;
+  flex-shrink:0;
+}
+.card-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(13px,1.8vw,16px);
+  color:var(--sand);
+  margin-bottom:9px;
+  display:flex;align-items:center;gap:6px;
+  opacity:.9;
+}
+
+/* ── route buttons ── */
+.rbgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.rbtn{
+  aspect-ratio:1;
+  border-radius:10px;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(14px,1.9vw,20px);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  min-height:48px;
+  user-select:none;
+  position:relative;overflow:hidden;
+  border:2.5px solid rgba(255,255,255,.1);
+  background:var(--surf2);
+  color:#666;
+  transition:transform .13s cubic-bezier(.34,1.56,.64,1),
+             box-shadow .13s,opacity .13s;
+}
+.rbtn::before{
+  content:'';
+  position:absolute;bottom:4px;right:4px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--rc);opacity:.65;
+  transition:opacity .2s;
+}
+.rbtn:active{transform:scale(.83)!important;}
+.rbtn.active{
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 16px rgba(0,0,0,.4),
+             inset 0 1px 0 rgba(255,255,255,.2);
+  transform:scale(1.08);
+}
+.rbtn.active::before{opacity:0;}
+.rbtn.active::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:45%;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),transparent);
+  pointer-events:none;
+}
+
+/* ── control buttons ── */
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.cbtn{
+  padding:12px 8px;
+  border:none;border-radius:10px;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(12px,1.6vw,16px);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  min-height:50px;
+  user-select:none;
+  box-shadow:0 3px 12px rgba(0,0,0,.4);
+  letter-spacing:.3px;
+  position:relative;overflow:hidden;
+  transition:transform .12s,filter .12s;
+}
+.cbtn::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),transparent);
+  pointer-events:none;
+}
+.cbtn:active{transform:scale(.9);filter:brightness(.85);}
+.cbtn-all  {background:var(--purpleg);color:#fff;}
+.cbtn-clear{background:var(--redg);color:#fff;}
+.cbtn-anim {background:var(--greeng);color:#fff;grid-column:span 2;}
+.cbtn-speed{background:var(--orangeg);color:#fff;grid-column:span 2;margin-top:-2px;}
+
+/* info box */
+.info-box{
+  font-size:clamp(11px,1.4vw,14px);
+  color:#aaa;line-height:1.7;padding:2px 0;
+}
+.info-box b{font-weight:800;}
+.hi {color:#FFD740;}
+.hiB{color:#82B1FF;}
+.hiG{color:#69F0AE;}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════ -->
+<header>
+  <div class="hdr-icon">🦛</div>
+  <div class="hdr-text">
+    <h1>Hippo Routes</h1>
+    <p>Think Like a Mathematician &nbsp;·&nbsp; 3 × 3 Grid</p>
+  </div>
+  <div class="hdr-badge">
+    <span class="num" id="routeNum">0</span>
+    <span class="lbl">routes shown</span>
+  </div>
+</header>
+
+<!-- ══ WORKSPACE ═══════════════════════════ -->
+<div class="workspace">
+
+  <!-- LEFT SIDEBAR: Questions & Answers -->
+  <aside class="sidebar">
+    <div class="sidebar-hdr">
+      <h2>💡 Questions</h2>
+      <button class="btn-reveal-all" onclick="revealAll()">Reveal All</button>
+    </div>
+    <div id="qrow"></div>
+  </aside>
+
+  <!-- CENTER: Canvas + Sequence strip -->
+  <div class="center-col" id="leftCol">
+    <div class="canvas-wrap"><canvas id="gc"></canvas></div>
+    <div class="seq-strip" id="seqStrip">
+      <span class="seq-lbl">Route:</span>
+      <span id="seqInner" style="color:#555;font-style:italic;font-size:.9em;">tap a number →</span>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Controls (main scrollable area) -->
+  <div class="right-panel">
+
+    <div class="card">
+      <div class="card-title">🗺️ Select a Route (1 – 20)</div>
+      <div class="rbgrid" id="rbgrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Controls</div>
+      <div class="ctrl-grid">
+        <button class="cbtn cbtn-all"   onclick="showAll()">🌈 Show All 20</button>
+        <button class="cbtn cbtn-clear" onclick="clearAll()">✕ Clear</button>
+        <button class="cbtn cbtn-anim"  id="btnAnim"  onclick="animToggle()">▶ Animate Selected Route</button>
+        <button class="cbtn cbtn-speed" id="btnSpeed" onclick="cycleSpeed()">⏱ Speed: Normal</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Route Info</div>
+      <div class="info-box" id="infoBox">
+        Tap any route number to draw it on the grid.<br>
+        The hippo always moves <b class="hiB">East →</b> or <b class="hiG">South ↓</b> — never North or West.
+        It needs exactly <b class="hi">3 East + 3 South = 6 steps</b> total.
+      </div>
+    </div>
+
+  </div><!-- /right-panel -->
+
+</div><!-- /workspace -->
+
+<script>
+/* ═══════════════════════════════════════
+   DATA & CONSTANTS
+═══════════════════════════════════════ */
+const GRID = 3;
+
+const COLORS = [
+  '#F44336','#FF5722','#FF9800','#FFC107','#C6FF00',
+  '#4CAF50','#00BFA5','#00BCD4','#03A9F4','#2196F3',
+  '#3F51B5','#7C4DFF','#E040FB','#F06292','#FF4081',
+  '#64FFDA','#B9F6CA','#FFD740','#FF6D00','#EA80FC'
+];
+
+const SPEEDS      = [650, 390, 180];
+const SPEED_NAMES = ['Slow','Normal','Fast'];
+let speedIdx = 1;
+
+/* generate all 20 routes (3E + 3S in every order) */
+function buildRoutes(){
+  const out = [];
+  (function go(x, y, path){
+    if(x === GRID && y === GRID){ out.push([...path]); return; }
+    if(x < GRID) go(x+1, y, [...path, {dx:1, dy:0, d:'E'}]);
+    if(y < GRID) go(x, y+1, [...path, {dx:0, dy:1, d:'S'}]);
+  })(0, 0, []);
+  return out;
+}
+const ROUTES = buildRoutes(); // exactly 20
+
+/* ═══════════════════════════════════════
+   CANVAS
+═══════════════════════════════════════ */
+const cv  = document.getElementById('gc');
+const ctx = cv.getContext('2d');
+let SZ, PAD, CELL;
+
+function calcSZ(){
+  const vh  = window.innerHeight;
+  const vw  = window.innerWidth;
+  const headerH  = document.querySelector('header').offsetHeight || 56;
+  const sidebarW = 212;
+  const rightMin = 260;
+  const available = vw - sidebarW - rightMin - 40; // gaps & padding
+  const maxH = vh - headerH - 46 - 42; // seq-strip + padding
+  return Math.max(180, Math.min(maxH, available, 500));
+}
+
+function setupCanvas(){
+  SZ   = calcSZ();
+  PAD  = Math.round(SZ * 0.1);
+  CELL = (SZ - 2*PAD) / GRID;
+  cv.width = cv.height = SZ;
+  cv.style.width = cv.style.height = SZ + 'px';
+  document.getElementById('leftCol').style.width = SZ + 'px';
+}
+
+const nx = c => PAD + c * CELL;
+const ny = r => PAD + r * CELL;
+
+/* ── render state ── */
+let activeSet = new Set();
+let hippoGX   = 0, hippoGY = 0;
+
+/* ─────────────────────────────────────
+   MAIN DRAW
+───────────────────────────────────── */
+function draw(animSteps){
+  ctx.clearRect(0, 0, SZ, SZ);
+
+  /* parchment bg */
+  ctx.fillStyle = '#FFF8EF';
+  ctx.fillRect(0, 0, SZ, SZ);
+
+  /* sand cells */
+  for(let r = 0; r < GRID; r++){
+    for(let c = 0; c < GRID; c++){
+      ctx.fillStyle = (r + c) % 2 === 0 ? '#F5DEB3' : '#EDCF8A';
+      rrect(nx(c)+2, ny(r)+2, CELL-4, CELL-4, 8);
+      ctx.fill();
+      const sh = ctx.createLinearGradient(nx(c),ny(r),nx(c),ny(r)+CELL*.45);
+      sh.addColorStop(0,'rgba(0,0,0,.05)');
+      sh.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = sh;
+      rrect(nx(c)+2, ny(r)+2, CELL-4, CELL-4, 8);
+      ctx.fill();
+    }
+  }
+
+  /* grid lines */
+  ctx.strokeStyle = '#B8901A';
+  ctx.lineWidth   = 1.8;
+  ctx.setLineDash([]);
+  for(let i = 0; i <= GRID; i++){
+    line(nx(i), PAD,    nx(i), SZ-PAD);
+    line(PAD,   ny(i),  SZ-PAD, ny(i));
+  }
+
+  /* outer border */
+  ctx.strokeStyle = '#8B6008';
+  ctx.lineWidth   = 2.5;
+  ctx.strokeRect(PAD-1, PAD-1, CELL*GRID+2, CELL*GRID+2);
+
+  /* ── routes ── */
+  const many = activeSet.size > 1;
+  activeSet.forEach(idx => {
+    const route = ROUTES[idx];
+    const steps = (animSteps != null && !many) ? route.slice(0, animSteps) : route;
+    drawRoute(steps, COLORS[idx], many);
+  });
+
+  /* ── intersection nodes ── */
+  for(let r = 0; r <= GRID; r++){
+    for(let c = 0; c <= GRID; c++){
+      const isS = r===0  && c===0;
+      const isE = r===GRID && c===GRID;
+      if(isS || isE) continue;
+      ctx.fillStyle   = '#9B6B2A';
+      ctx.strokeStyle = '#FFF8EF';
+      ctx.lineWidth   = 1.2;
+      ctx.beginPath();
+      ctx.arc(nx(c), ny(r), SZ*.013, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+    }
+  }
+
+  /* start-node ring */
+  ctx.strokeStyle = '#4A148C';
+  ctx.fillStyle   = 'rgba(74,20,140,.15)';
+  ctx.lineWidth   = 2.5;
+  ctx.beginPath(); ctx.arc(nx(0), ny(0), SZ*.025, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+
+  /* ── river ── */
+  const ex = nx(GRID), ey = ny(GRID), er = CELL * .41;
+  const rg = ctx.createRadialGradient(ex,ey,0,ex,ey,er);
+  rg.addColorStop(0,'#B3E5FC'); rg.addColorStop(.65,'#29B6F6'); rg.addColorStop(1,'#0277BD');
+  ctx.fillStyle = rg;
+  ctx.globalAlpha = .9;
+  ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.font = `${er * 1.05}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('🌊', ex, ey);
+
+  ctx.font      = `800 ${SZ * .027}px Nunito,sans-serif`;
+  ctx.fillStyle = '#01579B';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('RIVER', ex, ey - er - SZ*.01);
+
+  /* ── hippo ── */
+  const hx = nx(hippoGX), hy = ny(hippoGY);
+  const hs = SZ * .13;
+  ctx.font = `${hs}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.globalAlpha = .22;
+  ctx.fillText('🦛', hx + SZ*.012, hy + SZ*.018);
+  ctx.globalAlpha = 1;
+  ctx.fillText('🦛', hx, hy);
+
+  /* START label */
+  ctx.font      = `800 ${SZ * .027}px Nunito,sans-serif`;
+  ctx.fillStyle = '#6A1B9A';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('START', PAD + SZ*.005, PAD - SZ*.01);
+
+  /* ── compass rose ── */
+  drawCompass();
+
+  /* ── directional labels ── */
+  ctx.font         = `900 ${SZ * .036}px Nunito,sans-serif`;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign    = 'center';
+  ctx.fillStyle    = '#6B3A0A';
+  ctx.fillText('N', SZ * .5,      PAD * .28);
+  ctx.fillText('S', SZ * .5,      SZ - PAD * .28);
+  ctx.fillText('W', PAD * .26,    SZ * .5);
+  ctx.fillText('E', SZ-PAD * .26, SZ * .5);
+}
+
+/* draw one route's path */
+function drawRoute(steps, color, thin){
+  if(!steps.length) return;
+  const lw    = thin ? SZ * .016 : SZ * .03;
+  const alpha = thin ? .68       : 1;
+
+  if(!thin){
+    ctx.save();
+    ctx.shadowColor = color; ctx.shadowBlur = SZ * .045;
+    ctx.strokeStyle = color; ctx.lineWidth  = lw * .65;
+    ctx.globalAlpha = .32;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    pathThrough(steps); ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = lw;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  pathThrough(steps); ctx.stroke();
+  ctx.restore();
+
+  if(!thin){
+    let x = 0, y = 0;
+    steps.forEach(s => {
+      drawArrow(nx(x), ny(y), nx(x + s.dx), ny(y + s.dy), color);
+      x += s.dx; y += s.dy;
+    });
+  }
+}
+
+function pathThrough(steps){
+  let x = 0, y = 0;
+  ctx.beginPath(); ctx.moveTo(nx(x), ny(y));
+  steps.forEach(s => { x += s.dx; y += s.dy; ctx.lineTo(nx(x), ny(y)); });
+}
+
+function drawArrow(x1, y1, x2, y2, col){
+  const mx = (x1+x2)*.5, my = (y1+y2)*.5;
+  const ag = Math.atan2(y2-y1, x2-x1);
+  const sz = SZ * .033;
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(mx + Math.cos(ag)*sz,          my + Math.sin(ag)*sz);
+  ctx.lineTo(mx + Math.cos(ag+2.55)*sz*.56, my + Math.sin(ag+2.55)*sz*.56);
+  ctx.lineTo(mx + Math.cos(ag-2.55)*sz*.56, my + Math.sin(ag-2.55)*sz*.56);
+  ctx.closePath(); ctx.fill();
+}
+
+/* proper 8-spoke compass rose */
+function drawCompass(){
+  const ox = SZ - PAD * .66, oy = PAD * .66, R = PAD * .3;
+  const pts = [
+    [0,-1,true,1.45,'N'],[1,0,false,1.1,''],[0,1,false,1.1,''],[-1,0,false,1.1,''],
+    [.707,-.707,false,.75,''],[.707,.707,false,.75,''],[-.707,.707,false,.75,''],[-.707,-.707,false,.75,'']
+  ];
+  pts.forEach(([dx,dy,isN,len])=>{
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + dx*R*len, oy + dy*R*len);
+    ctx.strokeStyle = isN ? '#C62828' : '#8B6332';
+    ctx.lineWidth   = isN ? 2.2 : 1.2;
+    ctx.stroke();
+  });
+  ctx.fillStyle = '#4A148C';
+  ctx.beginPath(); ctx.arc(ox, oy, R*.22, 0, Math.PI*2); ctx.fill();
+  ctx.font = `900 ${R * .72}px Nunito,sans-serif`;
+  ctx.fillStyle    = '#C62828';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('N', ox, oy - R*1.75);
+}
+
+/* helpers */
+function rrect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);    ctx.arcTo(x+w,y,    x+w,y+r,   r);
+  ctx.lineTo(x+w,   y+h-r);ctx.arcTo(x+w,y+h,  x+w-r,y+h, r);
+  ctx.lineTo(x+r,   y+h);  ctx.arcTo(x,  y+h,  x,  y+h-r, r);
+  ctx.lineTo(x,     y+r);  ctx.arcTo(x,  y,    x+r,y,      r);
+  ctx.closePath();
+}
+function line(x1,y1,x2,y2){ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke(); }
+
+/* ═══════════════════════════════════════
+   ROUTE BUTTONS
+═══════════════════════════════════════ */
+const rbgrid = document.getElementById('rbgrid');
+const btns   = [];
+
+ROUTES.forEach((_, i) => {
+  const b = document.createElement('button');
+  b.className   = 'rbtn';
+  b.textContent = i + 1;
+  b.style.setProperty('--rc', COLORS[i]);
+  b.addEventListener('click', () => toggleRoute(i));
+  rbgrid.appendChild(b);
+  btns.push(b);
+});
+
+function activateBtn(i){
+  btns[i].classList.add('active');
+  btns[i].style.background  = COLORS[i];
+  btns[i].style.color       = '#fff';
+  btns[i].style.borderColor = 'transparent';
+}
+function deactivateBtn(i){
+  btns[i].classList.remove('active');
+  btns[i].style.background  = '';
+  btns[i].style.color       = '';
+  btns[i].style.borderColor = '';
+}
+
+function toggleRoute(i){
+  stopAnim();
+  if(activeSet.has(i)){
+    activeSet.delete(i); deactivateBtn(i);
+  } else {
+    activeSet.add(i);    activateBtn(i);
+  }
+  hippoGX = hippoGY = 0;
+  refreshUI(); draw();
+}
+
+function clearAll(){
+  stopAnim();
+  activeSet.clear();
+  btns.forEach((_, i) => deactivateBtn(i));
+  hippoGX = hippoGY = 0;
+  setSeq(null); setInfo('default'); bump();
+  draw();
+}
+
+function showAll(){
+  stopAnim();
+  ROUTES.forEach((_, i) => { activeSet.add(i); activateBtn(i); });
+  hippoGX = hippoGY = 0;
+  setSeq('all'); setInfo('all'); bump();
+  btns.forEach((b, i) => setTimeout(() => {
+    b.style.transform = 'scale(1.2)';
+    setTimeout(() => b.style.transform = '', 90);
+  }, i * 36));
+  draw();
+}
+
+/* ═══════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════ */
+function refreshUI(){
+  bump();
+  if(activeSet.size === 1){
+    const idx = [...activeSet][0];
+    setSeq(idx); setInfo('single', idx);
+  } else if(activeSet.size > 1){
+    setSeq('multi'); setInfo('multi');
+  } else {
+    setSeq(null); setInfo('default');
+  }
+}
+
+function bump(){
+  const el = document.getElementById('routeNum');
+  el.textContent = activeSet.size;
+  el.classList.add('pop');
+  setTimeout(() => el.classList.remove('pop'), 200);
+}
+
+function setSeq(tag){
+  const si = document.getElementById('seqInner');
+  if(tag === null){
+    si.innerHTML = '<span style="color:#555;font-style:italic;font-size:.9em;">tap a number →</span>';
+  } else if(tag === 'all'){
+    si.innerHTML = '<span style="color:#FFD740;font-weight:900;">All 20 routes displayed</span>';
+  } else if(tag === 'multi'){
+    si.innerHTML = `<span style="color:#FFD740;font-weight:900;">${activeSet.size} routes selected</span>`;
+  } else {
+    const r = ROUTES[tag];
+    const pills = r.map((s, i) =>
+      `<span class="pill pill-${s.d}" id="pp${i}">${s.d==='E'?'→ E':'↓ S'}</span>`
+    ).join('');
+    si.innerHTML = `<b style="color:${COLORS[tag]};font-weight:900;margin-right:4px;">Route ${tag+1}:</b>${pills}`;
+  }
+}
+
+function litPillsTo(n){
+  document.querySelectorAll('#seqInner .pill').forEach((el, i) =>
+    el.classList.toggle('dim', i >= n)
+  );
+}
+
+function setInfo(tag, idx){
+  const b = document.getElementById('infoBox');
+  if(tag === 'default'){
+    b.innerHTML = 'Tap any route number to draw it on the grid.<br>The hippo always moves <b class="hiB">East →</b> or <b class="hiG">South ↓</b> — never North or West. It needs exactly <b class="hi">3 East + 3 South = 6 steps</b> total.';
+  } else if(tag === 'all'){
+    b.innerHTML = 'All <b class="hi">20 routes</b> shown! 🌈<br>Each colour is a unique sequence. There are <b class="hi">C(6,3) = 6! ÷ (3!×3!) = 20</b> ways to arrange 3 East + 3 South moves.';
+  } else if(tag === 'multi'){
+    b.innerHTML = `<b class="hi">${activeSet.size} routes</b> selected. Tap lit buttons to deselect, or <b>Clear</b> to reset.`;
+  } else if(tag === 'single'){
+    const r = ROUTES[idx];
+    b.innerHTML = `<b style="color:${COLORS[idx]}">Route ${idx+1}</b> &nbsp;–&nbsp; <b class="hiB">${r.filter(s=>s.d==='E').length}× East</b>, <b class="hiG">${r.filter(s=>s.d==='S').length}× South</b><br>Sequence: <b>${r.map(s=>s.d==='E'?'→':'↓').join(' ')}</b><br><span style="font-size:.88em;color:#666;">Press ▶ Animate to watch the hippo walk this route.</span>`;
+  }
+}
+
+/* ═══════════════════════════════════════
+   ANIMATION
+═══════════════════════════════════════ */
+let animating = false;
+let animTimer = null;
+
+function animToggle(){
+  if(animating){ stopAnim(); return; }
+  if(activeSet.size !== 1){
+    document.getElementById('infoBox').innerHTML =
+      '<span style="color:#FF8A65;">⚠ Select exactly <b>one</b> route first, then press Animate.</span>';
+    return;
+  }
+  startAnim();
+}
+
+function startAnim(){
+  const idx   = [...activeSet][0];
+  const route = ROUTES[idx];
+  let   step  = 0;
+  animating   = true;
+  hippoGX = hippoGY = 0;
+
+  document.getElementById('btnAnim').textContent = '⏹ Stop Animation';
+  setSeq(idx);
+  draw(0); litPillsTo(0);
+
+  animTimer = setInterval(() => {
+    step++;
+    const s = route[step - 1];
+    hippoGX += s.dx; hippoGY += s.dy;
+    draw(step);
+    litPillsTo(step);
+
+    if(step >= route.length){
+      clearInterval(animTimer); animTimer = null;
+      animating = false;
+      document.getElementById('btnAnim').textContent = '▶ Animate Selected Route';
+    }
+  }, SPEEDS[speedIdx]);
+}
+
+function stopAnim(){
+  if(animTimer){ clearInterval(animTimer); animTimer = null; }
+  animating = false;
+  hippoGX = hippoGY = 0;
+  document.getElementById('btnAnim').textContent = '▶ Animate Selected Route';
+  draw();
+}
+
+function cycleSpeed(){
+  if(speedIdx >= SPEED_NAMES.length - 1) speedIdx = 0; else speedIdx++;
+  document.getElementById('btnSpeed').textContent = `⏱ Speed: ${SPEED_NAMES[speedIdx]}`;
+  if(animating){ stopAnim(); startAnim(); }
+}
+
+/* ═══════════════════════════════════════
+   QUESTIONS
+═══════════════════════════════════════ */
+const QS = [
+  {l:'a', q:'Max East steps before it has to turn?',         a:'3 steps',        c:'#F44336'},
+  {l:'b', q:'Total South steps the hippo walks?',            a:'3 steps',        c:'#FF9800'},
+  {l:'c', q:'Total East steps the hippo walks?',             a:'3 steps',        c:'#FFC107'},
+  {l:'d', q:'How many different routes in total?',           a:'20 routes ✓',    c:'#4CAF50'},
+  {l:'e', q:'Can the hippo ever walk North?',                a:'No ✕',           c:'#2196F3'},
+  {l:'f', q:'Can the hippo ever walk West?',                 a:'No ✕',           c:'#9C27B0'},
+  {l:'h', q:'Smaller / bigger blocks — what changes?',       a:'More or fewer!', c:'#E91E63'},
+];
+
+const qrow = document.getElementById('qrow');
+QS.forEach(q => {
+  const card = document.createElement('div');
+  card.className = 'qcard';
+  card.style.borderLeftColor = q.c;          /* left border for sidebar layout */
+  card.style.setProperty('--qc', q.c);
+  card.innerHTML = `
+    <div class="q-letter" style="color:${q.c};">
+      ${q.l.toUpperCase()} <span class="q-check">✓</span>
+    </div>
+    <div class="q-text">${q.q}</div>
+    <div class="q-ans blur" style="background:${q.c}1A;color:${q.c};">${q.a}</div>
+    <div class="q-hint">👆 tap to reveal</div>`;
+  card.addEventListener('click', () => {
+    const ans = card.querySelector('.q-ans');
+    const showing = ans.classList.contains('clear');
+    ans.classList.toggle('blur',  showing);
+    ans.classList.toggle('clear', !showing);
+    card.classList.toggle('done', !showing);
+  });
+  qrow.appendChild(card);
+});
+
+function revealAll(){
+  document.querySelectorAll('.q-ans').forEach(el =>{ el.classList.remove('blur'); el.classList.add('clear'); });
+  document.querySelectorAll('.qcard').forEach(el => el.classList.add('done'));
+}
+
+/* ═══════════════════════════════════════
+   INIT & RESIZE
+═══════════════════════════════════════ */
+window.addEventListener('resize', () => { setupCanvas(); draw(); });
+setupCanvas();
+draw();
+</script>
+</body>
+</html>
